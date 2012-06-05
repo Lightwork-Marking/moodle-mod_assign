@@ -104,7 +104,8 @@ class webservice_test extends UnitTestCase {
             'moodle_group_get_course_groups' => false,
             'moodle_group_get_groupmembers' => false,
             'moodle_webservice_get_siteinfo' => false,
-            'core_course_get_contents' => false
+            'core_course_get_contents' => false,
+            'mod_assign_get_grades' => false
         );
 
         // WRITE DB tests
@@ -1688,6 +1689,31 @@ class webservice_test extends UnitTestCase {
         $notes = $client->call($function, $params);
 
         $this->assertEqual(3, count($notes)); // 1 info is a success, 2 others should be failed
+    }
+
+    /**
+     * READONLY test
+     * Test that the assignment requested is returned
+     * @param object $client
+     */
+    private function mod_assign_get_grades($client) {
+        global $DB;
+        $dbassignments = $DB->get_records('assign', null, '', '*', 0, 1);
+        $function = 'mod_assign_get_grades';
+
+        $assignmentids = array();
+        $result = array();
+
+        foreach ($dbassignments as $dbassignment) {
+            $assignmentids[] = $dbassignment->id;
+        }
+
+        $params = array('assignmentids' => $assignmentids);
+        $result = $client->call($function, $params);
+
+        foreach ($result['assignments'] as $assignment) {
+            $this->assertTrue(in_array($assignment['assignmentid'], $assignmentids));
+        }
     }
 
 }
